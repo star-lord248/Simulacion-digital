@@ -1,0 +1,398 @@
+#include <iostream>
+#include <iomanip>
+#include <vector>
+#include <cmath>
+
+using namespace std;
+
+int main() {
+
+    // =====================================================
+    // 1. DATOS DEL GENERADOR CONGRUENCIAL MIXTO
+    // =====================================================
+
+    int X0 = 13;
+    int a = 21;
+    int c = 7;
+    int m = 100;
+    int n = 100;
+
+    vector<double> R;
+
+    int X = X0;
+
+
+    // =====================================================
+    // 2. ENCABEZADO
+    // =====================================================
+
+    cout << "============================================================\n";
+    cout << "       GENERADOR CONGRUENCIAL MIXTO\n";
+    cout << "============================================================\n\n";
+
+    cout << "Formula utilizada:\n";
+    cout << "Xi+1 = (a * Xi + c) mod m\n\n";
+
+    cout << "Datos:\n";
+    cout << "X0 = " << X0 << endl;
+    cout << "a  = " << a << endl;
+    cout << "c  = " << c << endl;
+    cout << "m  = " << m << endl;
+    cout << "n  = " << n << endl;
+
+
+    // =====================================================
+    // 3. TABLA DEL CONGRUENCIAL MIXTO
+    // =====================================================
+
+    cout << "\n\n";
+    cout << "============================================================\n";
+    cout << "             TABLA DEL CONGRUENCIAL\n";
+    cout << "============================================================\n\n";
+
+    cout << left
+         << setw(6) << "i"
+         << setw(10) << "Xi"
+         << setw(15) << "aXi + c"
+         << setw(12) << "Xi+1"
+         << setw(10) << "Ri"
+         << endl;
+
+    cout << "------------------------------------------------------------\n";
+
+    for (int i = 0; i < n; i++) {
+
+        // Valor actual Xi
+        int Xi = X;
+
+        // Calculamos a*Xi+c
+        int calculo = a * Xi + c;
+
+        // Aplicamos modulo
+        X = calculo % m;
+
+        // Generamos Ri
+        double Ri = (double) X / m;
+
+        // Guardamos Ri
+        R.push_back(Ri);
+
+        // Mostramos la tabla
+        cout << left
+             << setw(6) << i + 1
+             << setw(10) << Xi
+             << setw(15) << calculo
+             << setw(12) << X
+             << fixed << setprecision(2)
+             << setw(10) << Ri
+             << endl;
+    }
+
+
+    // =====================================================
+    // 4. PRUEBA DE UNIFORMIDAD
+    // =====================================================
+
+    cout << "\n\n";
+    cout << "============================================================\n";
+    cout << "             PRUEBA DE UNIFORMIDAD\n";
+    cout << "============================================================\n\n";
+
+    cout << "Se utilizan 10 intervalos.\n";
+    cout << "La frecuencia esperada es n/10.\n\n";
+
+    int frecuencia[10] = {0};
+
+    // Contamos cuantos Ri caen en cada intervalo
+    for (double r : R) {
+
+        int intervalo = (int)(r * 10);
+
+        if (intervalo >= 10) {
+            intervalo = 9;
+        }
+
+        frecuencia[intervalo]++;
+    }
+
+    double esperada = (double)n / 10;
+
+    double chiUniformidad = 0;
+
+    cout << left
+         << setw(18) << "Intervalo"
+         << setw(15) << "Observada"
+         << setw(15) << "Esperada"
+         << endl;
+
+    cout << "------------------------------------------------------------\n";
+
+    for (int i = 0; i < 10; i++) {
+
+        double limiteInferior = i / 10.0;
+        double limiteSuperior = (i + 1) / 10.0;
+
+        cout << fixed << setprecision(1)
+             << "["
+             << limiteInferior
+             << ","
+             << limiteSuperior
+             << ")"
+             << setw(10)
+             << frecuencia[i]
+             << setw(15)
+             << esperada
+             << endl;
+
+        // Formula Chi-cuadrado
+        chiUniformidad +=
+            pow(frecuencia[i] - esperada, 2) / esperada;
+    }
+
+    cout << "\nChi-cuadrado calculado = "
+         << fixed << setprecision(4)
+         << chiUniformidad << endl;
+
+    cout << "Chi-cuadrado tabla = 16.919\n";
+
+    if (chiUniformidad < 16.919) {
+
+        cout << "\nRESULTADO: Los numeros PASAN la prueba de uniformidad.\n";
+
+    } else {
+
+        cout << "\nRESULTADO: Los numeros NO pasan la prueba de uniformidad.\n";
+    }
+
+
+    // =====================================================
+    // 5. PRUEBA DE HUECOS
+    // =====================================================
+
+    cout << "\n\n";
+    cout << "============================================================\n";
+    cout << "                PRUEBA DE HUECOS\n";
+    cout << "============================================================\n\n";
+
+    // Intervalo utilizado
+    double alfa = 0.30;
+    double beta = 0.70;
+
+    // Probabilidad de exito
+    double p = beta - alfa;
+
+    cout << "Intervalo seleccionado: ["
+         << alfa << ","
+         << beta << ")\n\n";
+
+    cout << "Probabilidad de exito:\n";
+    cout << "p = beta - alfa\n";
+    cout << "p = " << beta << " - " << alfa << endl;
+    cout << "p = " << p << endl;
+
+
+    // =====================================================
+    // 6. ENCONTRAR LOS HUECOS
+    // =====================================================
+
+    vector<int> huecos;
+
+    int contador = 0;
+
+    bool primerExito = false;
+
+    for (double r : R) {
+
+        // Verificamos si Ri pertenece al intervalo
+        if (r >= alfa && r < beta) {
+
+            // Si ya encontramos un exito anteriormente,
+            // guardamos el tamaño del hueco
+            if (primerExito) {
+                huecos.push_back(contador);
+            }
+
+            // Encontramos un exito
+            primerExito = true;
+
+            // Reiniciamos contador
+            contador = 0;
+
+        } else {
+
+            // Si ya comenzo la prueba,
+            // aumentamos el tamaño del hueco
+            if (primerExito) {
+                contador++;
+            }
+        }
+    }
+
+
+    // =====================================================
+    // 7. MOSTRAR LOS HUECOS
+    // =====================================================
+
+    cout << "\n\n";
+    cout << "============================================================\n";
+    cout << "                HUECOS ENCONTRADOS\n";
+    cout << "============================================================\n\n";
+
+    for (int i = 0; i < huecos.size(); i++) {
+
+        cout << "Hueco " << i + 1
+             << " = "
+             << huecos[i]
+             << endl;
+    }
+
+
+    // =====================================================
+    // 8. FRECUENCIAS OBSERVADAS
+    // =====================================================
+
+    int O0 = 0;
+    int O1 = 0;
+    int O2 = 0;
+    int O3 = 0;
+
+    // Clasificamos los huecos
+    for (int h : huecos) {
+
+        if (h == 0) {
+            O0++;
+        }
+        else if (h == 1) {
+            O1++;
+        }
+        else if (h == 2) {
+            O2++;
+        }
+        else {
+            O3++;
+        }
+    }
+
+    int totalHuecos = huecos.size();
+
+
+    // =====================================================
+    // 9. FRECUENCIAS ESPERADAS
+    // =====================================================
+
+    /*
+        Formula:
+
+        P(G=j) = (1-p)^j * p
+
+        Para huecos >= 3:
+
+        P(G>=3) = (1-p)^3
+    */
+
+    double E0 = totalHuecos * p;
+
+    double E1 =
+        totalHuecos * pow(1 - p, 1) * p;
+
+    double E2 =
+        totalHuecos * pow(1 - p, 2) * p;
+
+    double E3 =
+        totalHuecos * pow(1 - p, 3);
+
+
+    // =====================================================
+    // 10. TABLA DE LA PRUEBA DE HUECOS
+    // =====================================================
+
+    cout << "\n\n";
+    cout << "============================================================\n";
+    cout << "             TABLA DE PRUEBA DE HUECOS\n";
+    cout << "============================================================\n\n";
+
+    cout << left
+         << setw(18) << "Tipo de hueco"
+         << setw(15) << "Observada"
+         << setw(15) << "Esperada"
+         << endl;
+
+    cout << "------------------------------------------------------------\n";
+
+    cout << setw(18) << "0"
+         << setw(15) << O0
+         << setw(15) << fixed << setprecision(4) << E0
+         << endl;
+
+    cout << setw(18) << "1"
+         << setw(15) << O1
+         << setw(15) << E1
+         << endl;
+
+    cout << setw(18) << "2"
+         << setw(15) << O2
+         << setw(15) << E2
+         << endl;
+
+    cout << setw(18) << ">= 3"
+         << setw(15) << O3
+         << setw(15) << E3
+         << endl;
+
+
+    // =====================================================
+    // 11. CHI-CUADRADO DE LA PRUEBA DE HUECOS
+    // =====================================================
+
+    double chiHuecos = 0;
+
+    chiHuecos += pow(O0 - E0, 2) / E0;
+
+    chiHuecos += pow(O1 - E1, 2) / E1;
+
+    chiHuecos += pow(O2 - E2, 2) / E2;
+
+    chiHuecos += pow(O3 - E3, 2) / E3;
+
+
+    cout << "\nChi-cuadrado calculado = "
+         << fixed << setprecision(4)
+         << chiHuecos
+         << endl;
+
+    cout << "Chi-cuadrado tabla = 7.815\n";
+
+
+    // =====================================================
+    // 12. RESULTADO FINAL
+    // =====================================================
+
+    cout << "\n\n";
+    cout << "============================================================\n";
+    cout << "                  RESULTADO FINAL\n";
+    cout << "============================================================\n\n";
+
+    cout << "PRUEBA DE UNIFORMIDAD:\n";
+
+    if (chiUniformidad < 16.919) {
+        cout << "Los numeros PASAN la prueba de uniformidad.\n";
+    } else {
+        cout << "Los numeros NO pasan la prueba de uniformidad.\n";
+    }
+
+    cout << "\nPRUEBA DE HUECOS:\n";
+
+    if (chiHuecos < 7.815) {
+        cout << "Los numeros PASAN la prueba de huecos.\n";
+    } else {
+        cout << "Los numeros NO pasan la prueba de huecos.\n";
+    }
+
+
+    cout << "\n============================================================\n";
+    cout << "                    FIN DEL PROGRAMA\n";
+    cout << "============================================================\n";
+
+
+    return 0;
+}
